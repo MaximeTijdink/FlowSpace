@@ -1,0 +1,67 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  password      String
+  name          String
+  avatar        String?
+  role          Role      @default(USER)
+  status        Status    @default(ACTIVE)
+  createdAt     DateTime  @default(now())
+  lastLogin     DateTime?
+  sessions      Session[] @relation("Participants")
+  hostedSessions Session[] @relation("Host")
+  messages      Message[]
+  tasks         Task[]
+}
+
+model Session {
+  id            String    @id @default(uuid())
+  title         String
+  hostId        String
+  host          User      @relation("Host", fields: [hostId], references: [id])
+  participants  User[]    @relation("Participants")
+  startTime     DateTime  @default(now())
+  duration      Int       // Duration in minutes
+  messages      Message[]
+  tasks         Task[]
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  text      String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  sessionId String
+  session   Session  @relation(fields: [sessionId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Task {
+  id        String   @id @default(uuid())
+  text      String
+  completed Boolean  @default(false)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  sessionId String
+  session   Session  @relation(fields: [sessionId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum Status {
+  ACTIVE
+  SUSPENDED
+}
